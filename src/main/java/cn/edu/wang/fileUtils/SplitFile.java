@@ -238,7 +238,7 @@ public class SplitFile {
 
     public static void main(String[] args) {
         //源文件路径、每块的大小(字节数)、目标快的路径
-        SplitFile split = new SplitFile("D:\\K-means\\测试视频.mp4", 60462, "D:\\K-means\\split\\");
+        SplitFile split = new SplitFile("D:\\K-means\\分布式计算课程项目.pdf", 5139, "D:\\K-means\\split\\");
 
         //文件初始化
         split.init();
@@ -252,7 +252,8 @@ public class SplitFile {
 
         //文件合并
         try {
-            split.merge("D:\\K-means\\split\\test.mp4");
+            //split.merge("D:\\K-means\\split\\test2.mp4");
+            MergeFile.mergerFile("D:\\K-means\\split\\分布式计算课程项目.pdf","D:\\K-means\\split\\","分布式计算课程项目.pdf.*");
         } catch (IOException e) {
             e.printStackTrace();
         }
