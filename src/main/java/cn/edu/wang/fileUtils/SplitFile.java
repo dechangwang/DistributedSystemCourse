@@ -238,7 +238,7 @@ public class SplitFile {
 
     public static void main(String[] args) {
         //源文件路径、每块的大小(字节数)、目标快的路径
-        SplitFile split = new SplitFile("D:\\K-means\\分布式计算课程项目.pdf", 5139, "D:\\K-means\\split\\");
+        SplitFile split = new SplitFile("D:"+File.separator+"K-means\\分布式计算课程项目.pdf", 5139, "D:\\K-means\\split\\");
 
         //文件初始化
         split.init();
