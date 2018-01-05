@@ -55,6 +55,17 @@ public class Configure {
         return value;
     }
 
+    public int getIntProperties(String key){
+        String value = properties.getProperty(key);
+        int res = 0;
+        try{
+            res = Integer.parseInt(value);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return res;
+    }
+
     public Map<String,String> getAllProperties(){
         Map<String,String> propertiesMap = new HashMap<String, String>();
         for(Object k : properties.keySet()){
