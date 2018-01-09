@@ -7,7 +7,6 @@ import org.apache.poi.ss.usermodel.Workbook;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.time.Duration;
 import java.time.LocalTime;
 import java.util.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -17,20 +16,45 @@ public class DataAnalysis {
 
     //计算出用户的每日平均通话次数，并将结果以<主叫号码, 每日平均通话
     //次数>的格式保存成 txt 或 excel 文件
-    public static void ProcessOne(String processFile, String outputFile) {
-        ArrayList<CallDataModel> datas = CSVFileLoader.ReadCsv(processFile);
 
-        ArrayList<Pair<String, Float>> UserCallTimePair = new ArrayList<>();
+    //处理1 分布式部分 客户端执行
+    public static HashMap<String, Pair<Long, Long>> ProcessOne_Compute(String processFile) {
+        System.out.println("ProcessOne_Compute Start");
+
+        ArrayList<CallDataModel> datas = CSVFileLoader.ReadCsvFromFile(processFile);
+
+        HashMap<String, Pair<Long, Long>> UserCallTimeMap = new HashMap<>();
+
+        //按照主叫号码 分组
         Map<String, ArrayList<CallDataModel>> distinctUsers =
                 datas.parallelStream().collect(Collectors.groupingBy((CallDataModel x) -> x.calling_nbr, Collectors.toCollection(ArrayList::new)));
 
+        //对于每一个主叫号码分别计算 分布式
         for (Map.Entry<String, ArrayList<CallDataModel>> distinctUser : distinctUsers.entrySet()) {
             Map<String, Long> CallTimePerDay =
                     distinctUser.getValue().parallelStream().collect(Collectors.groupingBy((CallDataModel x) -> x.day_id, Collectors.counting()));
 
-            Float avg = new Float(CallTimePerDay.values().stream().reduce(new Long(0), Long::sum)) / CallTimePerDay.values().size();
-            UserCallTimePair.add(new Pair<>(distinctUser.getKey(), avg));
+            Long sum = CallTimePerDay.values().stream().reduce(new Long(0), Long::sum);// / CallTimePerDay.values().size();
+            UserCallTimeMap.put(distinctUser.getKey(), new Pair<>(sum,  new Long(CallTimePerDay.values().size())));
         }
+        System.out.println("ProcessOne_Compute Finish");
+
+        return UserCallTimeMap;
+    }
+    //处理1 汇总 服务器合并客户端传来的中间数据
+    public static void ProcessOne_Collect(HashMap<String, Pair<Long, Long>> big, HashMap<String, Pair<Long, Long>> small, Object mutex) {
+        System.out.println("ProcessOne_Collect");
+
+        synchronized (mutex) {
+            for (Map.Entry<String, Pair<Long, Long>> set : small.entrySet()) {
+                big.merge(set.getKey(), set.getValue(), (oldV, newV) -> new Pair<>(oldV.GetFirst() + newV.GetFirst(), oldV.GetSecond() + newV.GetSecond()));
+            }
+        }
+    }
+    //处理1 汇总后部分，服务器端执行
+    public static void ProcessOne_Final(HashMap<String, Pair<Long, Long>> totalData, String outputFile) {
+        //汇总，除以总量
+        System.out.println("ProcessOne_Final");
 
         try {
             // 创建CSV写对象 例如:CsvWriter(文件路径，分隔符，编码格式);
@@ -39,8 +63,9 @@ public class DataAnalysis {
             String[] csvHeaders = {"主叫号码", "每日平均通话次数"};
             csvWriter.writeRecord(csvHeaders);
             // 写内容
-            for (Pair<String, Float> pair : UserCallTimePair) {
-                String[] csvLine = {pair.GetFirst(), pair.GetSecond().toString()};
+            for (Map.Entry<String, Pair<Long, Long>> pair : totalData.entrySet()) {
+                Float avg = new Float((float)pair.getValue().GetFirst() / pair.getValue().GetSecond());
+                String[] csvLine = {pair.getKey(), avg.toString()};
                 csvWriter.writeRecord(csvLine);
             }
             csvWriter.close();
@@ -53,7 +78,7 @@ public class DataAnalysis {
     //计算出不同通话类型（市话、长途、国际）下各个运营商（移动，联通，
     //电信）的占比，并画出饼状图
     public static void ProcessTwo(String processFile, String excelFilePath) {
-        ArrayList<CallDataModel> datas = CSVFileLoader.ReadCsv(processFile);
+        ArrayList<CallDataModel> datas = CSVFileLoader.ReadCsvFromFile(processFile);
 
         Map<CallType, ArrayList<CallDataModel>> distinctUsers =
                 datas.parallelStream().collect(Collectors.groupingBy((CallDataModel x) -> x.call_type, Collectors.toCollection(ArrayList::new)));
@@ -119,7 +144,7 @@ public class DataAnalysis {
     //例，并将结果以<主叫号码, 时间段 1 占比, ..., 时间段 8 占比>的格式保
     //存成 txt 或 excel 文件
     public static void ProcessThree(String processFile, String outputFile) {
-        ArrayList<CallDataModel> datas = CSVFileLoader.ReadCsv(processFile);
+        ArrayList<CallDataModel> datas = CSVFileLoader.ReadCsvFromFile(processFile);
 
         Map<String, ArrayList<CallDataModel>> distinctUsers =
                 datas.parallelStream().collect(Collectors.groupingBy((CallDataModel x) -> x.calling_nbr, Collectors.toCollection(ArrayList::new)));

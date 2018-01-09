@@ -1,6 +1,11 @@
 package cn.edu.wang.DataAnalysis;
 
-public class Pair<A, B> {
+import java.io.Serializable;
+import java.lang.invoke.SerializedLambda;
+
+public class Pair<A, B> implements Serializable{
+    private static final long serialVersionUID = 1L;
+
     private A first;
     private B second;
 

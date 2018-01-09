@@ -8,7 +8,7 @@ import java.util.ArrayList;
 class CSVFileLoaderTest {
     @Test
     void TestReadCsv() {
-        ArrayList<CallDataModel> datas = CSVFileLoader.ReadCsv("d:/1-tb_call_201202_random.txt");
+        ArrayList<CallDataModel> datas = CSVFileLoader.ReadCsvFromFile("d:/1-tb_call_201202_random.txt");
         Assertions.assertNotNull(datas);
         CallDataModel first = datas.get(0);
         Assertions.assertEquals("20120201", first.day_id);
