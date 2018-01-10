@@ -21,7 +21,7 @@ public class DataAnalysis {
     public static HashMap<String, Pair<Long, Long>> ProcessOne_Compute(String processFile) {
         System.out.println("ProcessOne_Compute Start");
 
-        ArrayList<CallDataModel> datas = CSVFileLoader.ReadCsvFromFile(processFile);
+        ArrayList<CallDataModel> datas = CSVUtil.ReadCsvFromFile(processFile);
 
         HashMap<String, Pair<Long, Long>> UserCallTimeMap = new HashMap<>();
 
@@ -78,7 +78,7 @@ public class DataAnalysis {
     //计算出不同通话类型（市话、长途、国际）下各个运营商（移动，联通，
     //电信）的占比，并画出饼状图
     public static void ProcessTwo(String processFile, String excelFilePath) {
-        ArrayList<CallDataModel> datas = CSVFileLoader.ReadCsvFromFile(processFile);
+        ArrayList<CallDataModel> datas = CSVUtil.ReadCsvFromFile(processFile);
 
         Map<CallType, ArrayList<CallDataModel>> distinctUsers =
                 datas.parallelStream().collect(Collectors.groupingBy((CallDataModel x) -> x.call_type, Collectors.toCollection(ArrayList::new)));
@@ -144,7 +144,7 @@ public class DataAnalysis {
     //例，并将结果以<主叫号码, 时间段 1 占比, ..., 时间段 8 占比>的格式保
     //存成 txt 或 excel 文件
     public static void ProcessThree(String processFile, String outputFile) {
-        ArrayList<CallDataModel> datas = CSVFileLoader.ReadCsvFromFile(processFile);
+        ArrayList<CallDataModel> datas = CSVUtil.ReadCsvFromFile(processFile);
 
         Map<String, ArrayList<CallDataModel>> distinctUsers =
                 datas.parallelStream().collect(Collectors.groupingBy((CallDataModel x) -> x.calling_nbr, Collectors.toCollection(ArrayList::new)));

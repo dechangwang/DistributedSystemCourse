@@ -3,14 +3,12 @@ package cn.edu.wang.DataAnalysis;
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.StringReader;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.List;
 
-public class CSVFileLoader {
+public  class CSVUtil {
     /**
      * 读取CSV文件
      */
@@ -86,5 +84,43 @@ public class CSVFileLoader {
             System.out.println(ex);
             return null;
         }
+    }
+
+    //分割一个文本文件 返回分割的文件路径数组
+    public static ArrayList<String> Split(String path, String fileName, String extension, int count) {
+        try {
+            FileReader read = new FileReader(path+fileName + "." + extension);
+            BufferedReader br = new BufferedReader(read);
+            String row;
+            List<FileWriter> flist = new ArrayList<FileWriter>();
+            ArrayList<String> fPath = new ArrayList<>();
+            for (int i = 0; i < count; i++) {
+                flist.add(new FileWriter(path+fileName+"_"+i+"."+extension));
+                fPath.add(path+fileName+"_"+i+"."+extension);
+            }
+            long totalLines = br.lines().count();
+            long avgLine = totalLines / count;
+            int rownum = 1;// 计数器
+            int currentFile = 0;
+            while ((row = br.readLine()) != null) {
+                if(rownum <= avgLine || currentFile == count-1)
+                {
+                    flist.get(currentFile).append(row + "\r\n");
+                    rownum++;
+                }
+                else
+                {
+                    rownum = 0;
+                    currentFile++;
+                    flist.get(currentFile).close();
+                }
+            }
+            return fPath;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

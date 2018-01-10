@@ -19,6 +19,8 @@ import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.concurrent.TimeUnit;
 
 
@@ -53,6 +55,8 @@ public class ComputationClient {
             socketChannel = (SocketChannel)future.channel();
             System.out.println("connect server  成功---------");
         }
+
+
     }
     public static void main(String[]args) throws InterruptedException {
         Constants.setClientId("001");
@@ -62,8 +66,18 @@ public class ComputationClient {
 
         bootstrap.socketChannel.writeAndFlush(loginMsg);
 
-        bootstrap.socketChannel.writeAndFlush(new AskComputationMsg(){{this.ActionID = 1;}});
-        while (true){
+
+        while (true) {
+            try {
+                BufferedReader in = new BufferedReader(new InputStreamReader(
+                        System.in));
+                if(in.readLine() == "start")
+                {
+                    bootstrap.socketChannel.writeAndFlush(new AskComputationMsg(){{this.ActionID = 1;}});
+
+                }
+            }catch(Exception e){}
+
             TimeUnit.SECONDS.sleep(3);
             AskMsg askMsg=new AskMsg();
             AskParams askParams=new AskParams();

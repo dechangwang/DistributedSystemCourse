@@ -5,10 +5,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 
-class CSVFileLoaderTest {
+class CSVUtilTest {
     @Test
     void TestReadCsv() {
-        ArrayList<CallDataModel> datas = CSVFileLoader.ReadCsvFromFile("d:/1-tb_call_201202_random.txt");
+        ArrayList<CallDataModel> datas = CSVUtil.ReadCsvFromFile("d:/1-tb_call_201202_random.txt");
         Assertions.assertNotNull(datas);
         CallDataModel first = datas.get(0);
         Assertions.assertEquals("20120201", first.day_id);

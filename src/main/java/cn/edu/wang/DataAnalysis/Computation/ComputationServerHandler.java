@@ -33,6 +33,8 @@ public class ComputationServerHandler extends SimpleChannelInboundHandler<BaseMs
                 //登录成功,把channel存到服务端的map中
                 NettyChannelMap.add(loginMsg.getClientId(),(SocketChannel)channelHandlerContext.channel());
                 System.out.println("client"+loginMsg.getClientId()+" 登录成功");
+            System.out.println("当前已有"+ NettyChannelMap.getClients().size() + "个节点");
+
         }else{
             if(NettyChannelMap.get(baseMsg.getClientId())==null){
                 //说明未登录，或者连接断了，服务器向客户端发起登录请求，让客户端重新登录
@@ -60,12 +62,25 @@ public class ComputationServerHandler extends SimpleChannelInboundHandler<BaseMs
             {
                 System.out.println("ASK_COMPUTATION");
                 //客户端请求分布式计算
-                NodeStartJobMsg msg = new NodeStartJobMsg();
-                msg.FilePath = "d:/1-tb_call_201202_random.csv";
-                msg.ActionID = 1;
-                _computationAskedClientID = msg.getClientId();
-                //向所有连接的客户端发布计算请求
-                NettyChannelMap.getClients().values().forEach(c->c.writeAndFlush(msg));
+
+                _computationAskedClientID = baseMsg.getClientId();
+
+                //向所有连接的客户端发布计算请求 测试 两个节点
+                if(NettyChannelMap.getClients().size() == 2)
+                {
+                    int i = 0;
+                    for(SocketChannel s :  NettyChannelMap.getClients().values())
+                    {
+                        NodeStartJobMsg msg = new NodeStartJobMsg();
+                        msg.FilePath = "d:/1-tb_call_201202_random_" + i + ".csv";
+                        msg.ActionID = 1;
+                        _computationAskedClientID = msg.getClientId();
+                        i++;
+                    }
+
+                }
+                //NettyChannelMap.getClients().values().forEach(c->c.writeAndFlush(msg));
+
             }
             break;
             case NODE_JOB_FINISH:
