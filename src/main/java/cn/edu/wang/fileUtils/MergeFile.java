@@ -97,6 +97,52 @@ public class MergeFile {
         Utils.close(sis);
     }
 
+    public static void mergerFile(String destPath,List<File> files) throws IOException {
+        //1、创建源
+        File dest = new File(destPath);
+
+        //2、选择流
+        //SequenceInputStream 表示其他输入流的逻辑串联。它从输入流的有序集合开始，
+        //并从第一个输入流开始读取，直到到达文件末尾，接着从第二个输入流读取，依次类推，
+        //直到到达包含的最后一个输入流的文件末尾为止。
+
+        SequenceInputStream sis = null;//输入流
+        BufferedOutputStream bos = null;//输出源
+
+        List<File> resultList = files;
+
+        if (resultList.size() == 0) {
+            System.out.println("No File Fount.");
+        } else {
+            Collections.sort(resultList,new FileComparator());
+            for (int i = 0; i < resultList.size(); i++) {
+                System.out.println(resultList.get(i));//显示查找结果。
+            }
+        }
+
+        //创建一个容器
+        Vector<InputStream> vi = new Vector<InputStream>();
+        for (int i = 0; i < resultList.size(); i++) {
+            vi.add(new BufferedInputStream(
+                    new FileInputStream(resultList.get(i))));
+        }
+        //SequenceInputStream sis = new SequenceInputStream(vi.elements());
+        bos = new BufferedOutputStream(new FileOutputStream(dest, true));//表示追加
+        sis = new SequenceInputStream(vi.elements());
+
+        //缓冲区
+        byte[] flush = new byte[1024];
+        //接收长度
+        int len = 0;
+        while (-1 != (len = sis.read(flush))) {
+            //打印到控制台
+            //System.out.println(new String(flush,0,len));
+            bos.write(flush, 0, len);
+        }
+        bos.flush();
+        Utils.close(sis);
+    }
+
 
     /**
      * 递归查找文件

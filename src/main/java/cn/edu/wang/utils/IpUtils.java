@@ -118,4 +118,14 @@ public class IpUtils {
         return arrayList;
     }
 
+    public static ArrayList<String> findOtherActivateNode(String currentIp){
+        ArrayList<String> arrayList = new ArrayList<>();
+        for (String ip:Global.activateIps){
+            if (!ip.equals(currentIp)){
+                arrayList.add(ip);
+            }
+        }
+        return arrayList;
+    }
+
 }

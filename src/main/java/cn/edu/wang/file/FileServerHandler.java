@@ -1,19 +1,22 @@
 package cn.edu.wang.file;
 
 import cn.edu.wang.Global;
+import cn.edu.wang.bean.Message;
+import cn.edu.wang.communication.CommunicateWithCallbackClient;
 import cn.edu.wang.config.Configure;
 import cn.edu.wang.fileUtils.MergeFile;
 import cn.edu.wang.fileUtils.SplitFile;
 import cn.edu.wang.fileUtils.Utils;
 import cn.edu.wang.uploadFile.FileUploadClient;
 import cn.edu.wang.uploadFile.FileUploadFile;
+import cn.edu.wang.utils.DownloadFile;
 import cn.edu.wang.utils.IpUtils;
+import com.google.gson.Gson;
 import io.netty.channel.*;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by wangdechang on 2018/1/3
@@ -24,6 +27,7 @@ import java.util.List;
  */
 public class FileServerHandler extends SimpleChannelInboundHandler<String> {
     private static final String CR = System.getProperty("line.separator");
+    Gson gson = new Gson();
 
 
     @Override
@@ -48,7 +52,7 @@ public class FileServerHandler extends SimpleChannelInboundHandler<String> {
         System.out.println("this is fileUpload server");
         Configure configure = Configure.getConfigureInstance();
         configure.loadProperties();
-        if(msg.contains("upload")){
+        if (msg.contains("upload")) {
             String[] orders = msg.split(" ");
             File file = new File(orders[1]);
 
@@ -72,9 +76,9 @@ public class FileServerHandler extends SimpleChannelInboundHandler<String> {
                 if (splitFiles != null && splitFiles.size() > 0) {
                     String ip = configure.getProperties("ip");
                     //TODO 更改
-                    ArrayList<String> arrayList = IpUtils.neighborIps(Global.currentIp,Global.allIps);
+                    ArrayList<String> arrayList = IpUtils.neighborIps(Global.currentIp, Global.allIps);
                     int server2Port = configure.getIntProperties("server_port");
-                    if (arrayList.size() > 0){
+                    if (arrayList.size() > 0) {
                         int index = 0;
                         for (String splitfile : splitFiles) {
                             try {
@@ -85,7 +89,7 @@ public class FileServerHandler extends SimpleChannelInboundHandler<String> {
                                 uploadFile.setFile_md5(fileMd5);
                                 uploadFile.setStarPos(0);// 文件开始位置
                                 new FileUploadClient().connect(server2Port, arrayList.get(index % arrayList.size()), uploadFile);
-                                index ++;
+                                index++;
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -108,33 +112,130 @@ public class FileServerHandler extends SimpleChannelInboundHandler<String> {
             } else {
                 ctx.writeAndFlush("File not found: " + file + CR);
             }
-        }else if(msg.contains("download")){ //处理文件下载的东西
+        } else if (msg.contains("download")) { //处理文件下载的东西
             String[] orders = msg.split(" ");
             String filenName = orders[1];
             String targetPath = orders[2];
+            if (targetPath!= null && targetPath.length() > 0){
+                Global.targetpath = targetPath;
+            }
             configure.loadProperties();
             String path = configure.getProperties("save_file_path");
             List<File> files = new ArrayList<>();
-            MergeFile.findFiles(path,filenName.trim()+"*",files);
+            MergeFile.findFiles(path, filenName.trim() + "*", files);
             boolean hasFound = false;
-            if (files.size() > 0){
-                for (File file: files){
-                    if (file.getName().trim().equals(filenName)){
-                        Utils.writeFile2TargetPath(file.getAbsolutePath(),targetPath+File.separator+filenName);
+            if (files.size() > 0) {
+                for (File file : files) {
+                    if (file.getName().trim().equals(filenName)) {
+                        Utils.writeFile2TargetPath(file.getAbsolutePath(), targetPath + File.separator + filenName);
+                        files.remove(file);
                         hasFound = true;
+                        break;
                     }
                 }
             }
 
-            if (!hasFound){
-
+            if (!hasFound) {
+                searchFile(files,filenName,ctx);
             }
-        }
-        else{
+        } else {
 
         }
     }
 
+    private void searchFile(List<File> files,String fileName,ChannelHandlerContext ctx) {
+        Configure configure = Configure.getConfigureInstance();
+        configure.loadProperties();
+        int port = configure.getIntProperties("comm_port");
+        ArrayList<String> activateIps = IpUtils.findOtherActivateNode(Global.currentIp);
+        ChannelFutureListener channelFutureListener = new ChannelFutureListener() {
+            @Override
+            public void operationComplete(ChannelFuture channelFuture) throws Exception {
+                //TODO 在这里处理请求处理结束的结果
+                if (Global.searchResultNumber >= activateIps.size()){
+                    Global.searchResultNumber = 0;
+                }
+                selectFileDownload(ctx,files);
+
+            }
+        };
+        Message message = new Message("search",Global.currentIp);
+        message.setFileName(fileName);
+        message.setOrder("search");
+        for (String ip : activateIps) {
+            CommunicateWithCallbackClient client = new CommunicateWithCallbackClient(channelFutureListener);
+            try {
+                client.connect(ip,port,gson.toJson(message));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+
+    }
+
+
+    private void selectFileDownload(ChannelHandlerContext ctx,List<File> files){
+
+        //filename ip
+        HashMap<String,String> otherNodeFiles = new HashMap<>();
+        HashSet<String> allFileName = new HashSet<>();
+
+        //本地机器上存在的文件
+        HashSet<String> localFiles = new HashSet<>();
+        for (File f:files){
+            localFiles.add(f.getName());
+            allFileName.add(f.getName().trim());
+        }
+        HashSet<Message> res = Global.searchResult;
+        for(Message message:res){
+            if (message != null && message.getFileNameList() != null && message.getFileNameList().size() > 0){
+                for (String name:message.getFileNameList()){
+                    int fileSeparator = name.lastIndexOf(File.separator);
+                    String subName = name.substring(fileSeparator + 1,name.length()).trim();
+                    if (!allFileName.contains(subName)){
+                        allFileName.add(subName);
+                        otherNodeFiles.put(name,message.getIp());
+                    }
+                }
+
+            }
+        }
+        Global.searchResult.clear();
+
+        //接下來需要处理文件的下载
+        Configure configure = Configure.getConfigureInstance();
+        configure.loadProperties();
+        String projectName = configure.getProperties("DistributedFileSystem_jar");
+        String downloadPort = configure.getProperties("download_file_port");
+        String tempPath = configure.getProperties("temp_path");
+        File file = new File(tempPath);
+        if (!file.exists()){
+            file.mkdir();
+        }
+        for (Map.Entry<String,String> entry:otherNodeFiles.entrySet()){
+            String name = entry.getKey();
+            String ip = entry.getValue();
+            String postfixName = name.substring(name.indexOf(projectName+File.separator) + projectName.length() + 1,name.length());
+            String url = "http://"+ip.trim()+":"+ downloadPort + "/" + postfixName;
+            int fileSeparator = name.lastIndexOf(File.separator);
+            String subName = name.substring(fileSeparator + 1,name.length()).trim();
+            String path = tempPath + File.separator + File.separator + subName;
+            if(DownloadFile.downloadFile(url,path)){
+                files.add(new File(path));
+            }
+
+        }
+
+        if (files != null && files.size() >0){
+            try {
+                MergeFile.mergerFile(Global.targetpath,files);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
 
     public void saveReceivedFile(File srcFile, String destPath) {
         BufferedOutputStream outputStream = null;

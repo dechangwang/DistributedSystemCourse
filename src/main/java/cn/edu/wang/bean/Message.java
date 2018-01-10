@@ -1,6 +1,7 @@
 package cn.edu.wang.bean;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 
 /**
  * Created by wangdechang on 2018/1/9
@@ -11,6 +12,7 @@ public class Message implements Serializable {
     private String order;
     private String fileName;
     private String targetpath;
+    private ArrayList<String> fileNameList;
 
     public Message() {
     }
@@ -64,5 +66,13 @@ public class Message implements Serializable {
 
     public void setTargetpath(String targetpath) {
         this.targetpath = targetpath;
+    }
+
+    public ArrayList<String> getFileNameList() {
+        return fileNameList;
+    }
+
+    public void setFileNameList(ArrayList<String> fileNameList) {
+        this.fileNameList = fileNameList;
     }
 }

@@ -3,6 +3,7 @@ package cn.edu.wang.communication;
 import cn.edu.wang.Global;
 import cn.edu.wang.bean.Message;
 import cn.edu.wang.config.Configure;
+import cn.edu.wang.fileUtils.MergeFile;
 import cn.edu.wang.heartBeat.HeartBeatsClient;
 import cn.edu.wang.log.Log;
 import cn.edu.wang.utils.IpUtils;
@@ -13,6 +14,11 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.xml.bind.annotation.XmlElementDecl;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by wangdechang on 2018/1/7
@@ -33,6 +39,7 @@ public class CServerHandler extends ChannelInboundHandlerAdapter{
         String resultStr = new String(result1);
         // 接收并打印客户端的信息
         System.out.println("Client said:" + resultStr);
+        String response = "received your message!";
 
         try{
             Message message = null;
@@ -81,22 +88,48 @@ public class CServerHandler extends ChannelInboundHandlerAdapter{
 //                    HeartBeatsClient client = new HeartBeatsClient(heart_beat_port,preIp);
 //                    client.start();
 //                }
+            }else if(message.getStatus().equals("search")){
+                response = searchFile(message.getFileName());
             }
         }catch (Exception e){
             e.printStackTrace();
             Log.log("communication：服务端接收消息异常");
         }
 
-        // 释放资源，这行很关键
+        // 释放资源
         result.release();
 
         // 向客户端发送消息
-        String response = "received your message!";
+
         // 在当前场景下，发送的数据必须转换成ByteBuf数组
         ByteBuf encoded = ctx.alloc().buffer(4 * response.length());
         encoded.writeBytes(response.getBytes());
         ctx.write(encoded);
         ctx.flush();
+    }
+
+    private String searchFile(String fileName){
+        String response = "";
+        Configure configure = Configure.getConfigureInstance();
+        configure.loadProperties();
+        String path = configure.getProperties("save_file_path");
+        List<File> files = new ArrayList<>();
+        MergeFile.findFiles(path, fileName.trim() + "*", files);
+        if (files!= null && files.size() > 0){
+            Message message = new Message("searchResult",Global.currentIp);
+            message.setFileName(fileName);
+            ArrayList<String> fileNames = new ArrayList<>();
+            for (File file:files){
+                if (!file.getName().equals(fileName)){
+                    fileNames.add(file.getAbsolutePath());
+                }
+            }
+            message.setFileNameList(fileNames);
+            message.setIp(Global.currentIp);
+            response = gson.toJson(message);
+        }
+
+        return response;
     }
 
     @Override
