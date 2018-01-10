@@ -16,7 +16,7 @@ public class HeartBeatServerChannelInitializer extends ChannelInitializer<Socket
     protected void initChannel(SocketChannel socketChannel) throws Exception {
         ChannelPipeline pipeline = socketChannel.pipeline();
 
-        pipeline.addLast("handler",new IdleStateHandler(10, 0, 0, TimeUnit.SECONDS));
+        pipeline.addLast("handler",new IdleStateHandler(10*60*60, 0, 0, TimeUnit.SECONDS));
         pipeline.addLast("decoder", new StringDecoder());
         pipeline.addLast("encoder", new StringEncoder());
         pipeline.addLast(new HeartBeatServerHandler());

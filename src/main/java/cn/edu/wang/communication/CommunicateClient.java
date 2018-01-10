@@ -13,7 +13,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
  * Created by wangdechang on 2018/1/7
  */
 public class CommunicateClient {
-    public void connect(String host, int port) throws Exception {
+    public void connect(String host, int port,String message) throws Exception {
         EventLoopGroup workerGroup = new NioEventLoopGroup();
 
         try {
@@ -24,7 +24,7 @@ public class CommunicateClient {
             b.handler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 public void initChannel(SocketChannel ch) throws Exception {
-                    ch.pipeline().addLast(new CClientHandler());
+                    ch.pipeline().addLast(new CClientHandler(message));
                 }
             });
 
@@ -41,6 +41,6 @@ public class CommunicateClient {
 
     public static void main(String[] args) throws Exception {
         CommunicateClient client = new CommunicateClient();
-        client.connect("127.0.0.1", 8000);
+        client.connect("127.0.0.1", 8000,"message");
     }
 }

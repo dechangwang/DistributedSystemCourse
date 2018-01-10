@@ -16,6 +16,10 @@ import io.netty.util.CharsetUtil;
 /**
  * Created by wangdechang on 2018/1/3
  */
+
+/**
+ * FileServer类用来从本地上传文件到该分布式系统中
+ */
 public class FileServer {
     public void run(int port) throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
@@ -26,13 +30,7 @@ public class FileServer {
                     .channel(NioServerSocketChannel.class)
                     .option(ChannelOption.SO_BACKLOG, 100)
                     .childHandler(new ChannelInitializer<SocketChannel>() {
-                        /*
-                         * (non-Javadoc)
-                         *
-                         * @see
-                         * io.netty.channel.ChannelInitializer#initChannel(io
-                         * .netty.channel.Channel)
-                         */
+
                         public void initChannel(SocketChannel ch)
                                 throws Exception {
                             ch.pipeline().addLast(

@@ -1,5 +1,6 @@
 package cn.edu.wang.uploadFile;
 
+import cn.edu.wang.config.Configure;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
@@ -8,10 +9,21 @@ import java.io.*;
 /**
  * Created by wangdechang on 2018/1/3
  */
-public class FileUploadServerHandler extends ChannelInboundHandlerAdapter  {
+public class FileUploadServerHandler extends ChannelInboundHandlerAdapter {
     private int byteRead;
     private volatile int start = 0;
-    private String file_dir = "D:\\K-means";
+    private String file_dir = "D:\\saveFiles";
+
+    public FileUploadServerHandler() {
+        Configure configure = Configure.getConfigureInstance();
+        configure.loadProperties();
+        file_dir = configure.getProperties("copy_file_path");
+        File copyDir = new File(file_dir);
+        if (!copyDir.exists()){
+            copyDir.mkdir();
+            copyDir.mkdir();
+        }
+    }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -20,14 +32,15 @@ public class FileUploadServerHandler extends ChannelInboundHandlerAdapter  {
             byte[] bytes = ef.getBytes();
             byteRead = ef.getEndPos();
             String md5 = ef.getFile_md5();//文件名
+
             String path = file_dir + File.separator + md5;
             File file = new File(path);
             /*RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
             randomAccessFile.seek(start);
             randomAccessFile.write(bytes);*/
 
-            BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file,true));
-            outputStream.write(bytes,0,byteRead);
+            BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file, true));
+            outputStream.write(bytes, 0, byteRead);
             outputStream.close();
 
             start = start + byteRead;
@@ -39,7 +52,7 @@ public class FileUploadServerHandler extends ChannelInboundHandlerAdapter  {
 //                randomAccessFile.close();
 
             }
-            if (byteRead <=0){
+            if (byteRead <= 0) {
 //                randomAccessFile.close();
                 ctx.close();
             }

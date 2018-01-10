@@ -1,5 +1,6 @@
 package cn.edu.wang.communication;
 
+import com.google.gson.Gson;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -12,6 +13,12 @@ import org.slf4j.LoggerFactory;
  */
 public class CClientHandler extends ChannelInboundHandlerAdapter  {
     private static Logger logger = LoggerFactory.getLogger(CClientHandler.class);
+    private String message = "{\"status\":\"message\",\"ip\":\"127.0.0.1\"}";
+    Gson gson = new Gson();
+
+    public CClientHandler(String message){
+        this.message = message;
+    }
 
     // 接收server端的消息，并打印出来
     @Override
@@ -22,18 +29,14 @@ public class CClientHandler extends ChannelInboundHandlerAdapter  {
         result.readBytes(result1);
         System.out.println("Server said:" + new String(result1));
         result.release();
-        String msg1 = "Are you ok?";
-        ByteBuf encoded = ctx.alloc().buffer(4 * msg1.length());
-        encoded.writeBytes(msg1.getBytes());
-        ctx.write(encoded);
-        ctx.flush();
+        ctx.close();
     }
 
     // 连接成功后，向server发送消息
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         logger.info("HelloClientIntHandler.channelActive");
-        String msg = "Are you ok?";
+        String msg = message;
         ByteBuf encoded = ctx.alloc().buffer(4 * msg.length());
         encoded.writeBytes(msg.getBytes());
         ctx.write(encoded);

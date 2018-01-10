@@ -26,6 +26,8 @@ public class FileUploadClientHandler extends ChannelInboundHandlerAdapter {
         this.fileUploadFile = ef;
     }
 
+
+
     public void channelActive(ChannelHandlerContext ctx) {
         try {
             randomAccessFile = new RandomAccessFile(fileUploadFile.getFile(), "r");

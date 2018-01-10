@@ -1,5 +1,7 @@
 package cn.edu.wang.fileUtils;
 
+import cn.edu.wang.config.Configure;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -50,6 +52,13 @@ public class SplitFile {
         this.blocksize = blocksize;
     }
 
+    public String getDestBlockPath(){
+        return destBlockPath;
+    }
+
+    public List<String> getBlockPath() {
+        return blockPath;
+    }
 
     /**
      * 初始化操作 计算块数、确定文件名
@@ -64,7 +73,6 @@ public class SplitFile {
             return;
         }
 
-        //文件名    g:/writer.txt的 writer.txt
         this.fileName = src.getName();
         //文件的大小
         this.length = src.length();
@@ -83,9 +91,13 @@ public class SplitFile {
     }
 
     private void initPathName() {
+        File dir = new File(destBlockPath);
+        if (!dir.exists()){
+            dir.mkdir();
+        }
         for (int i = 0; i < size; i++) {
             //List容器里面增加每一块的路径
-            this.blockPath.add(destBlockPath + "/" + this.fileName + ".part" + i);
+            this.blockPath.add(destBlockPath + File.separator + this.fileName + ".part" + i);
         }
     }
 
@@ -238,7 +250,14 @@ public class SplitFile {
 
     public static void main(String[] args) {
         //源文件路径、每块的大小(字节数)、目标快的路径
-        SplitFile split = new SplitFile("D:"+File.separator+"K-means\\分布式计算课程项目.pdf", 5139, "D:\\K-means\\split\\");
+        Configure configure = Configure.getConfigureInstance();
+        configure.loadProperties();
+        int blockSize = configure.getIntProperties("block_size");
+        if (blockSize == 0){
+            blockSize = 5;
+        }
+
+        SplitFile split = new SplitFile("D:"+File.separator+"K-means\\分布式计算课程项目.pdf", 1024*1024*blockSize, "D:\\K-means\\split\\");
 
         //文件初始化
         split.init();

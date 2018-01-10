@@ -33,4 +33,34 @@ public class Utils {
         close(outputStream);
 
     }
+
+    public static void writeFile2TargetPath(String originPath,String targetPath){
+        InputStream inStream = null;
+        OutputStream outStream = null;
+
+        try {
+
+            File originFile = new File(originPath);
+            File targetFile = new File(targetPath);
+
+            inStream = new FileInputStream(originFile);
+            outStream = new FileOutputStream(targetFile);
+
+            byte[] buffer = new byte[1024];
+
+            int length;
+            //copy the file content in bytes
+            while ((length = inStream.read(buffer)) > 0) {
+
+                outStream.write(buffer, 0, length);
+
+            }
+
+            inStream.close();
+            outStream.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
