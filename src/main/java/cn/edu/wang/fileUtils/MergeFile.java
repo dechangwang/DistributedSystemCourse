@@ -100,6 +100,13 @@ public class MergeFile {
     public static void mergerFile(String destPath,List<File> files) throws IOException {
         //1、创建源
         File dest = new File(destPath);
+        if (!dest.exists()){
+            dest.createNewFile();
+        }else{
+            dest.delete();
+            dest = new File(destPath);
+            dest.createNewFile();
+        }
 
         //2、选择流
         //SequenceInputStream 表示其他输入流的逻辑串联。它从输入流的有序集合开始，
@@ -139,6 +146,7 @@ public class MergeFile {
             //System.out.println(new String(flush,0,len));
             bos.write(flush, 0, len);
         }
+
         bos.flush();
         Utils.close(sis);
     }

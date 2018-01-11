@@ -21,7 +21,6 @@ public class FileUploadServerHandler extends ChannelInboundHandlerAdapter {
         File copyDir = new File(file_dir);
         if (!copyDir.exists()){
             copyDir.mkdir();
-            copyDir.mkdir();
         }
     }
 

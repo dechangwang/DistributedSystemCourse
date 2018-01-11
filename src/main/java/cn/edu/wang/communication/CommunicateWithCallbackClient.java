@@ -11,10 +11,12 @@ import io.netty.channel.socket.nio.NioSocketChannel;
  */
 public class CommunicateWithCallbackClient {
     private ChannelFutureListener iCommunicationCallback;
+    private ICommunicationCallback callback;
 
 
-    public CommunicateWithCallbackClient(ChannelFutureListener iCommunicationCallback) {
+    public CommunicateWithCallbackClient(ChannelFutureListener iCommunicationCallback,ICommunicationCallback callback) {
         this.iCommunicationCallback = iCommunicationCallback;
+        this.callback = callback;
 
     }
 
@@ -29,7 +31,7 @@ public class CommunicateWithCallbackClient {
             b.handler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 public void initChannel(SocketChannel ch) throws Exception {
-                    ch.pipeline().addLast(new CClientHandlerWithCallback(message));
+                    ch.pipeline().addLast(new CClientHandlerWithCallback(message,callback));
                 }
             });
 

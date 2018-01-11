@@ -11,6 +11,7 @@ import java.net.URLConnection;
 public class DownloadFile {
 
     public static boolean downloadFile(String urlString,String dest){
+        System.out.println("url = "+urlString);
         URL url = null;
         try {
             url = new URL(urlString);

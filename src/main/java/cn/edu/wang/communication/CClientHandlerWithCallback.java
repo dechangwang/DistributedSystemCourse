@@ -4,6 +4,7 @@ import cn.edu.wang.Global;
 import cn.edu.wang.bean.Message;
 import com.google.gson.Gson;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.slf4j.Logger;
@@ -17,10 +18,12 @@ import javax.xml.bind.annotation.XmlElementDecl;
 public class CClientHandlerWithCallback extends ChannelInboundHandlerAdapter  {
     private static Logger logger = LoggerFactory.getLogger(CClientHandlerWithCallback.class);
     private String message = "{\"status\":\"message\",\"ip\":\"127.0.0.1\"}";
+    private ICommunicationCallback callback;
     Gson gson = new Gson();
 
-    public CClientHandlerWithCallback(String message){
+    public CClientHandlerWithCallback(String message,ICommunicationCallback callback){
         this.message = message;
+        this.callback = callback;
     }
 
     // 接收server端的消息，并打印出来
@@ -32,14 +35,24 @@ public class CClientHandlerWithCallback extends ChannelInboundHandlerAdapter  {
         String message = new String(result1);
         System.out.println("Server said:" + message);
         //将获取的结果进行保存
-        Global.searchResultNumber ++;
+
         Message resMessage = null;
         try{
             resMessage = gson.fromJson(message,Message.class);
         }catch (Exception e){
             e.printStackTrace();
         }
-        Global.searchResult.add(resMessage);
+        if (resMessage != null && resMessage.getStatus().equals("searchResult")){
+            Global.searchResult.add(resMessage);
+            Global.searchResultNumber.incrementAndGet();
+            callback.callback(resMessage);
+        }
+        if (resMessage != null && resMessage.getStatus().equals("deleteResult")){
+            System.out.println("deleteResult >>>>");
+            Global.deleteResultNumber.incrementAndGet();
+            System.out.println(Global.deleteResultNumber.get());
+            callback.callback(resMessage);
+        }
         result.release();
         ctx.close();
     }

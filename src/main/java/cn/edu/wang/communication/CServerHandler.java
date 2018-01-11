@@ -39,7 +39,7 @@ public class CServerHandler extends ChannelInboundHandlerAdapter{
         String resultStr = new String(result1);
         // 接收并打印客户端的信息
         System.out.println("Client said:" + resultStr);
-        String response = "received your message!";
+        String response = "{\"status\":\"message\",\"ip\":\"127.0.0.1\"}";
 
         try{
             Message message = null;
@@ -48,6 +48,7 @@ public class CServerHandler extends ChannelInboundHandlerAdapter{
             }else{
                 message = gson.fromJson(resultStr,Message.class);
             }
+            System.out.println("resMessage status = "+message.getStatus());
             //接收到有节点宕机的信息
             if (message.getStatus().equals("dead")){
                 String ip = message.getIp();
@@ -90,6 +91,8 @@ public class CServerHandler extends ChannelInboundHandlerAdapter{
 //                }
             }else if(message.getStatus().equals("search")){
                 response = searchFile(message.getFileName());
+            }else if (message.getStatus().equals("delete")){
+                response = searchAndDeleteFile(message.getFileName());
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -108,25 +111,56 @@ public class CServerHandler extends ChannelInboundHandlerAdapter{
         ctx.flush();
     }
 
-    private String searchFile(String fileName){
-        String response = "";
+
+    private String searchAndDeleteFile(String fileName){
+        String response = "{\"status\":\"deleteResult\",\"ip\":\"127.0.0.1\"}";;
         Configure configure = Configure.getConfigureInstance();
         configure.loadProperties();
         String path = configure.getProperties("save_file_path");
         List<File> files = new ArrayList<>();
         MergeFile.findFiles(path, fileName.trim() + "*", files);
+        Message message = new Message("deleteResult",Global.currentIp);
         if (files!= null && files.size() > 0){
-            Message message = new Message("searchResult",Global.currentIp);
+            message.setFileName(fileName);
+            for (File file:files){
+                if (!file.getName().equals(fileName)){
+                    file.delete();
+                }
+            }
+            message.setIp(Global.currentIp);
+            response = gson.toJson(message);
+        }else{
+            message.setStatus("nosearchFile");
+        }
+
+        return response;
+    }
+
+    private String searchFile(String fileName){
+        String response = "{\"status\":\"searchResult\",\"ip\":\"127.0.0.1\"}";;
+        Configure configure = Configure.getConfigureInstance();
+        configure.loadProperties();
+        String path = configure.getProperties("save_file_path");
+        String projectName = configure.getProperties("project_name");
+        List<File> files = new ArrayList<>();
+        MergeFile.findFiles(path, fileName.trim() + "*", files);
+        Message message = new Message("searchResult",Global.currentIp);
+        if (files!= null && files.size() > 0){
             message.setFileName(fileName);
             ArrayList<String> fileNames = new ArrayList<>();
             for (File file:files){
                 if (!file.getName().equals(fileName)){
-                    fileNames.add(file.getAbsolutePath());
+                    String absolutePath = file.getAbsolutePath();
+                    int index = absolutePath.indexOf(projectName);
+                    String relativePath = absolutePath.substring(index + projectName.length()+1,absolutePath.length());
+                    fileNames.add(relativePath);
                 }
             }
             message.setFileNameList(fileNames);
             message.setIp(Global.currentIp);
             response = gson.toJson(message);
+        }else{
+            message.setStatus("nosearchFile");
         }
 
         return response;

@@ -4,6 +4,7 @@ import cn.edu.wang.bean.Message;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by wangdechang on 2018/1/7
@@ -17,6 +18,9 @@ public class Global {
     public volatile static boolean heartBeatServer = true;
     public volatile static boolean hearBeatClient = true;
     public static HashSet<Message> searchResult = new HashSet<>();
-    public static volatile int searchResultNumber = 0;
-    public static volatile String targetpath = "D:\\";
+    public static AtomicInteger searchResultNumber = new AtomicInteger(1);
+    public static AtomicInteger deleteResultNumber = new AtomicInteger(1);
+
+    //
+    public static volatile String targetPathName = "D:\\";
 }

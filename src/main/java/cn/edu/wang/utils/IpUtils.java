@@ -39,8 +39,6 @@ public class IpUtils {
         int pos = 0;
         //查找宕机节点在集群中的位置
         for (int i = 0; i < allIps.length; i++) {
-            System.out.println(allIps[i]);
-            System.out.println(allIps[i].trim().equals(currentIp.trim()));
             if (allIps[i].trim().equals(currentIp.trim())) {
                 pos = i;
                 break;
