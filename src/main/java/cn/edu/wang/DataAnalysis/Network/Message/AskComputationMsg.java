@@ -1,15 +1,13 @@
-package cn.edu.wang.DataAnalysis.Computation.Message;
+package cn.edu.wang.DataAnalysis.Network.Message;
 
-import java.util.HashMap;
-
-public class NodeStartJobMsg extends BaseMsg {
-    public NodeStartJobMsg() {
+public class AskComputationMsg extends BaseMsg {
+    public AskComputationMsg() {
         super();
-        setType(MsgType.NODE_START_JOB);
+        setType(MsgType.ASK_COMPUTATION);
     }
     public int ActionID;
 
-    public String FilePath;
+
     public void setParams(int actionId) {
         this.ActionID = actionId;
     }
@@ -22,5 +20,3 @@ public class NodeStartJobMsg extends BaseMsg {
         ActionID = actionID;
     }
 }
-
-

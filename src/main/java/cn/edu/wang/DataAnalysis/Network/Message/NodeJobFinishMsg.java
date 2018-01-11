@@ -1,6 +1,7 @@
-package cn.edu.wang.DataAnalysis.Computation.Message;
+package cn.edu.wang.DataAnalysis.Network.Message;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class NodeJobFinishMsg extends BaseMsg {
     public NodeJobFinishMsg() {
@@ -9,7 +10,7 @@ public class NodeJobFinishMsg extends BaseMsg {
     }
 
 
-    public HashMap getResultData() {
+    public Map getResultData() {
         return ResultData;
     }
 
@@ -17,5 +18,5 @@ public class NodeJobFinishMsg extends BaseMsg {
         ResultData = resultData;
     }
 
-    public HashMap ResultData;
+    public Map ResultData;
 }

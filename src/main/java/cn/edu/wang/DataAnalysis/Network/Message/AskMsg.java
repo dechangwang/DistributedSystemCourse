@@ -1,6 +1,4 @@
-package cn.edu.wang.DataAnalysis.Computation.Message;
-
-import java.io.Serializable;
+package cn.edu.wang.DataAnalysis.Network.Message;
 
 public class AskMsg extends BaseMsg {
     public AskMsg() {

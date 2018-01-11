@@ -1,6 +1,4 @@
-package cn.edu.wang.DataAnalysis.Computation.Message;
-
-import java.io.Serializable;
+package cn.edu.wang.DataAnalysis.Network.Message;
 
 public class PingMsg extends BaseMsg {
     public PingMsg() {

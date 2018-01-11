@@ -1,4 +1,4 @@
-package cn.edu.wang.DataAnalysis.Computation.Message;
+package cn.edu.wang.DataAnalysis.Network.Message;
 
 import java.io.Serializable;
 

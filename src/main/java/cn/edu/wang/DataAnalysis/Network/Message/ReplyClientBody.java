@@ -1,4 +1,4 @@
-package cn.edu.wang.DataAnalysis.Computation.Message;
+package cn.edu.wang.DataAnalysis.Network.Message;
 
 public class ReplyClientBody extends ReplyBody {
     private String clientInfo;

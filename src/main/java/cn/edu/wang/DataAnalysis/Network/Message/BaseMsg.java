@@ -1,6 +1,6 @@
-package cn.edu.wang.DataAnalysis.Computation.Message;
+package cn.edu.wang.DataAnalysis.Network.Message;
 
-import cn.edu.wang.DataAnalysis.Computation.Constants;
+import cn.edu.wang.DataAnalysis.Network.Constants;
 
 import java.io.Serializable;
 

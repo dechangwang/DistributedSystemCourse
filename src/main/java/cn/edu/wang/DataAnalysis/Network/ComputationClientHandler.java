@@ -1,15 +1,16 @@
-package cn.edu.wang.DataAnalysis.Computation;
+package cn.edu.wang.DataAnalysis.Network;
 
 
-import cn.edu.wang.DataAnalysis.Computation.Message.*;
-import cn.edu.wang.DataAnalysis.DataAnalysis;
-import cn.edu.wang.DataAnalysis.Pair;
+import cn.edu.wang.DataAnalysis.*;
+import cn.edu.wang.DataAnalysis.Network.Message.*;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.ReferenceCountUtil;
 
+import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.Map;
 
 public class ComputationClientHandler extends SimpleChannelInboundHandler<BaseMsg> {
     @Override
@@ -18,9 +19,9 @@ public class ComputationClientHandler extends SimpleChannelInboundHandler<BaseMs
             IdleStateEvent e = (IdleStateEvent) evt;
             switch (e.state()) {
                 case WRITER_IDLE:
-                    PingMsg pingMsg=new PingMsg();
-                    ctx.writeAndFlush(pingMsg);
-                    System.out.println("send ping to server----------");
+                  //  PingMsg pingMsg=new PingMsg();
+                  //  ctx.writeAndFlush(pingMsg);
+                   // System.out.println("send ping to server----------");
                     break;
                 default:
                     break;
@@ -45,6 +46,7 @@ public class ComputationClientHandler extends SimpleChannelInboundHandler<BaseMs
                 replyMsg.setBody(replyClientBody);
                 channelHandlerContext.writeAndFlush(replyMsg);
             }break;
+
             case NODE_START_JOB:
             {
                 System.out.println("NODE_START_JOB");
@@ -53,17 +55,34 @@ public class ComputationClientHandler extends SimpleChannelInboundHandler<BaseMs
                 int jobType = msg.ActionID;
                 switch(jobType)
                 {
-                    //进行第一个数据处理 目前写死，之后可以用工厂动态创建指定类
-                    //文件分割，处理制定文本可以放在StartJobMsg里面，目前写死
                     case 1:
                     {
-                        HashMap<String, Pair<Long, Long>> result =  DataAnalysis.ProcessOne_Compute(msg.FilePath);
+                        HashMap<String, Pair<Long, Long>> result =  new ProcessOne().Compute(msg.FilePath);
                         NodeJobFinishMsg outMsg = new NodeJobFinishMsg();
                         outMsg.ResultData = result;
                         channelHandlerContext.writeAndFlush(outMsg);
+                        break;
                     }
+                    case 2:
+                    {
+                        EnumMap<CallType, EnumMap<MobileOperator, Long>> result =  new ProcessTwo().Compute(msg.FilePath);
+                        NodeJobFinishMsg outMsg = new NodeJobFinishMsg();
+                        outMsg.ResultData = result;
+                        channelHandlerContext.writeAndFlush(outMsg);
+                        break;
+                    }
+                    case 3:
+                    {
+                        HashMap<String, Map<String, Double>> result =  new ProcessThree().Compute(msg.FilePath);
+                        NodeJobFinishMsg outMsg = new NodeJobFinishMsg();
+                        outMsg.ResultData = result;
+                        channelHandlerContext.writeAndFlush(outMsg);
+                        break;
+                    }
+
                 }
             }
+
             break;
             case REPLY:{
                 ReplyMsg replyMsg=(ReplyMsg)baseMsg;

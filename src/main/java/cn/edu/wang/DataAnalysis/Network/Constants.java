@@ -1,4 +1,4 @@
-package cn.edu.wang.DataAnalysis.Computation;
+package cn.edu.wang.DataAnalysis.Network;
 
 public class Constants {
     private static String clientId;

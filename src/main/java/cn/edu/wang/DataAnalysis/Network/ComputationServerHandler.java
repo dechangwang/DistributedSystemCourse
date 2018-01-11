@@ -1,6 +1,6 @@
-package cn.edu.wang.DataAnalysis.Computation;
+package cn.edu.wang.DataAnalysis.Network;
 
-import cn.edu.wang.DataAnalysis.Computation.Message.*;
+import cn.edu.wang.DataAnalysis.Network.Message.*;
 import cn.edu.wang.DataAnalysis.DataAnalysis;
 import cn.edu.wang.DataAnalysis.Pair;
 import io.netty.channel.ChannelHandlerContext;
@@ -8,7 +8,6 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.util.ReferenceCountUtil;
 
-import javax.xml.crypto.Data;
 import java.util.HashMap;
 
 public class ComputationServerHandler extends SimpleChannelInboundHandler<BaseMsg> {
@@ -20,10 +19,15 @@ public class ComputationServerHandler extends SimpleChannelInboundHandler<BaseMs
         NettyChannelMap.remove((SocketChannel)ctx.channel());
     }
 
+
     //请求分布式计算的客户端id
-    private String _computationAskedClientID;
-    private int _clientReturnCountprocessOne = 0;
-    final Object _mutex = new Object();
+
+    private static int _clientReturnCountprocessOne = 0;
+
+    public  static DataAnalysis AnalysisJob;
+
+
+    static  final Object _mutex = new Object();
     private HashMap<String, Pair<Long, Long>> _resultDataProcessOne = new HashMap<>();
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, BaseMsg baseMsg) throws Exception {
@@ -32,7 +36,10 @@ public class ComputationServerHandler extends SimpleChannelInboundHandler<BaseMs
             LoginMsg loginMsg=(LoginMsg)baseMsg;
                 //登录成功,把channel存到服务端的map中
                 NettyChannelMap.add(loginMsg.getClientId(),(SocketChannel)channelHandlerContext.channel());
-                System.out.println("client"+loginMsg.getClientId()+" 登录成功");
+                //一开始节点都是空闲的
+            //channelHandlerContext.channel().localAddress()
+                NettyChannelMap.IdleClient.add((SocketChannel)channelHandlerContext.channel());
+                System.out.println(loginMsg.getClientId()+" computation client 登录成功");
             System.out.println("当前已有"+ NettyChannelMap.getClients().size() + "个节点");
 
         }else{
@@ -58,23 +65,22 @@ public class ComputationServerHandler extends SimpleChannelInboundHandler<BaseMs
                     NettyChannelMap.get(askMsg.getClientId()).writeAndFlush(replyMsg);
                 }
             }break;
+            /*
             case ASK_COMPUTATION:
             {
                 System.out.println("ASK_COMPUTATION");
                 //客户端请求分布式计算
 
-                _computationAskedClientID = baseMsg.getClientId();
-
                 //向所有连接的客户端发布计算请求 测试 两个节点
                 if(NettyChannelMap.getClients().size() == 2)
                 {
-                    int i = 0;
+                    int i = 1;
                     for(SocketChannel s :  NettyChannelMap.getClients().values())
                     {
                         NodeStartJobMsg msg = new NodeStartJobMsg();
-                        msg.FilePath = "d:/1-tb_call_201202_random_" + i + ".csv";
+                        msg.FilePath = "d:/"+i+"-tb_call_201202_random.csv";
                         msg.ActionID = 1;
-                        _computationAskedClientID = msg.getClientId();
+                        s.writeAndFlush(msg);
                         i++;
                     }
 
@@ -83,21 +89,25 @@ public class ComputationServerHandler extends SimpleChannelInboundHandler<BaseMs
 
             }
             break;
+            */
             case NODE_JOB_FINISH:
             {
                 System.out.println("NODE_JOB_FINISH");
 
                 NodeJobFinishMsg msg = (NodeJobFinishMsg)baseMsg;
-                DataAnalysis.ProcessOne_Collect(_resultDataProcessOne, msg.ResultData, _mutex);
+
+                //客户端空闲
+                NettyChannelMap.IdleClient.add(NettyChannelMap.get(baseMsg.getClientId()));
+
+                AnalysisJob.Collect(msg.ResultData);
+
                 synchronized (_mutex)
                 {
-                    _clientReturnCountprocessOne++;
-                }
-                if(_clientReturnCountprocessOne == NettyChannelMap.getClients().size())
-                {
-                    //计算 收集完毕 输出结果
-                    //TODO 写死
-                    DataAnalysis.ProcessOne_Final(_resultDataProcessOne, "D://1-tb_call_201202_random_output.csv");
+                    ComputationServer.JobFinished++;
+                    if(ComputationServer.JobFinished == 10)
+                    {
+                        AnalysisJob.Final();
+                    }
                 }
             }
             break;

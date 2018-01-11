@@ -1,13 +1,12 @@
-package cn.edu.wang.DataAnalysis.Computation.Message;
+package cn.edu.wang.DataAnalysis.Network.Message;
 
-public class AskComputationMsg extends BaseMsg {
-    public AskComputationMsg() {
+public class NodeStartJobMsg extends BaseMsg {
+    public NodeStartJobMsg() {
         super();
-        setType(MsgType.ASK_COMPUTATION);
+        setType(MsgType.NODE_START_JOB);
     }
     public int ActionID;
-
-
+    public String FilePath;
     public void setParams(int actionId) {
         this.ActionID = actionId;
     }
@@ -20,3 +19,5 @@ public class AskComputationMsg extends BaseMsg {
         ActionID = actionID;
     }
 }
+
+

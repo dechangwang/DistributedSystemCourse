@@ -1,4 +1,4 @@
-package cn.edu.wang.DataAnalysis.Computation.Message;
+package cn.edu.wang.DataAnalysis.Network.Message;
 
 public class LoginMsg extends BaseMsg {
 
@@ -6,5 +6,4 @@ public class LoginMsg extends BaseMsg {
         super();
         setType(MsgType.LOGIN);
     }
-
 }
