@@ -32,7 +32,7 @@ public class FileServerHandler extends SimpleChannelInboundHandler<String> {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
-//        ctx.writeAndFlush("Type the path of the file to upload.\r\n");
+        /*ctx.writeAndFlush("Type the path of the file to upload.\r\n");*/
         ctx.writeAndFlush("Welcome!!!\r\n");
     }
 
@@ -48,13 +48,25 @@ public class FileServerHandler extends SimpleChannelInboundHandler<String> {
         ctx.close();
     }
 
+    private void answerClient(ChannelHandlerContext ctx,String msg){
+        ctx.writeAndFlush(msg);
+    }
+
     protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
         System.out.println("this is fileUpload server");
         Configure configure = Configure.getConfigureInstance();
         configure.loadProperties();
         if (msg.contains("upload")) {
             String[] orders = msg.split(" ");
+            if (orders.length < 2){
+                answerClient(ctx,"please add file path"+CR);
+                return;
+            }
             File file = new File(orders[1]);
+            if (!file.exists()){
+                answerClient(ctx,"no file found"+CR);
+                return;
+            }
 
             String path = configure.getProperties("save_file_path");
             saveReceivedFile(file, path);
@@ -62,12 +74,20 @@ public class FileServerHandler extends SimpleChannelInboundHandler<String> {
 
         } else if (msg.contains("download")) { //处理文件下载的东西
             String[] orders = msg.split(" ");
+            if (orders.length < 2){
+                answerClient(ctx,"parameters too short"+CR);
+                return;
+            }
             String filenName = orders[1];
             String targetPath = orders[2];
+
+            String wholeTargetPathName = "";
             if (targetPath!= null && targetPath.length() > 0){
                 if (targetPath.lastIndexOf("\\") == targetPath.length()){
                     Global.targetPathName = targetPath + filenName;
+                    wholeTargetPathName = targetPath + filenName;
                 }else {
+                    wholeTargetPathName = targetPath + File.separator + filenName;
                     Global.targetPathName = targetPath + File.separator + filenName;
                 }
 
@@ -89,7 +109,7 @@ public class FileServerHandler extends SimpleChannelInboundHandler<String> {
             }
 
             if (!hasFound) {
-                searchFile(files,filenName,ctx);
+                searchFile(files,filenName,ctx,wholeTargetPathName);
 
             }
         } else if (msg.contains("update")){
@@ -115,6 +135,8 @@ public class FileServerHandler extends SimpleChannelInboundHandler<String> {
             }
 
 
+        }else{
+            answerClient(ctx,"maybe enter wrong order!"+CR);
         }
     }
 
@@ -176,7 +198,7 @@ public class FileServerHandler extends SimpleChannelInboundHandler<String> {
         }
     }
 
-    public void searchFile(List<File> files,String fileName,ChannelHandlerContext ctx) {
+    public void searchFile(List<File> files,String fileName,ChannelHandlerContext ctx,String wholeTargetPathName) {
         Configure configure = Configure.getConfigureInstance();
         configure.loadProperties();
         int port = configure.getIntProperties("comm_port");
@@ -203,7 +225,7 @@ public class FileServerHandler extends SimpleChannelInboundHandler<String> {
                 System.out.println(">>>>number = "+Global.searchResultNumber);
                 if (Global.searchResultNumber.get() >= activateIps.size()){
                     Global.searchResultNumber.set(1);
-                    selectFileDownload(ctx,files);
+                    selectFileDownload(ctx,files,fileName,wholeTargetPathName);
                 }
             }
         };
@@ -276,8 +298,8 @@ public class FileServerHandler extends SimpleChannelInboundHandler<String> {
 
     }
 
-    public void selectFileDownload(ChannelHandlerContext ctx,List<File> files){
-        System.out.println(">>>> 选择文件");
+    public void selectFileDownload(ChannelHandlerContext ctx,List<File> files,String fileName,String wholeTargetPathName){
+        System.out.println(">>>> 选择文件下载");
         //filename ip
         HashMap<String,String> otherNodeFiles = new HashMap<>();
         HashSet<String> allFileName = new HashSet<>();
@@ -294,7 +316,8 @@ public class FileServerHandler extends SimpleChannelInboundHandler<String> {
                 for (String name:message.getFileNameList()){
                     int fileSeparator = name.lastIndexOf(File.separator);
                     String subName = name.substring(fileSeparator + 1,name.length()).trim();
-                    if (!allFileName.contains(subName)){
+                    //本地文件列表中不存在且名字一致
+                    if (!allFileName.contains(subName) && subName.contains(fileName)){
                         allFileName.add(subName);
                         otherNodeFiles.put(name,message.getIp());
                     }
@@ -302,7 +325,7 @@ public class FileServerHandler extends SimpleChannelInboundHandler<String> {
 
             }
         }
-//        Global.searchResult.clear();
+        Global.searchResult.clear();
 
         //接下來需要处理文件的下载
         Configure configure = Configure.getConfigureInstance();
@@ -315,10 +338,7 @@ public class FileServerHandler extends SimpleChannelInboundHandler<String> {
             file.mkdir();
         }
         System.out.println("================================");
-        System.out.println(otherNodeFiles.isEmpty());
-        if (!otherNodeFiles.isEmpty()){
-            System.out.println("=====not null==========");
-        }
+        System.out.println(otherNodeFiles);
         for (Map.Entry<String,String> entry:otherNodeFiles.entrySet()){
             String name = entry.getKey();
             String ip = entry.getValue();
@@ -338,8 +358,8 @@ public class FileServerHandler extends SimpleChannelInboundHandler<String> {
 
         if (files != null && files.size() >0){
             try {
-                System.out.println("<<<<mergeFile"+Global.targetPathName);
-                MergeFile.mergerFile(Global.targetPathName,files);
+                System.out.println("<<<<mergeFile"+wholeTargetPathName);
+                MergeFile.mergerFile(wholeTargetPathName,files);
             } catch (IOException e) {
                 e.printStackTrace();
             }
