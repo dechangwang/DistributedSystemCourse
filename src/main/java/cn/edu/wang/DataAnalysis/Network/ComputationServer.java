@@ -4,6 +4,7 @@ import cn.edu.wang.DataAnalysis.*;
 import cn.edu.wang.DataAnalysis.Network.FileDispatch.FileDispatchClient;
 import cn.edu.wang.DataAnalysis.Network.FileDispatch.FileDispatchServer;
 import cn.edu.wang.DataAnalysis.Network.Message.NodeStartJobMsg;
+import cn.edu.wang.config.Configure;
 import cn.edu.wang.uploadFile.FileUploadFile;
 import io.netty.channel.socket.SocketChannel;
 
@@ -66,7 +67,9 @@ public class ComputationServer {
         uploadFile.setFile_md5(fileMd5);
         uploadFile.setStarPos(0);// 文件开始位置
         try {
-            new FileDispatchClient().connect(8081, client.remoteAddress().getHostString(), uploadFile);
+            Configure configure = Configure.getConfigureInstance();
+            int file_port = configure.getIntProperties("file_port");
+            new FileDispatchClient().connect(file_port, client.remoteAddress().getHostString(), uploadFile);
         }
         catch (Exception e)
         {
@@ -122,7 +125,11 @@ public class ComputationServer {
     public static ComputationServer Instance;
 
     public static void main(String[] args) throws InterruptedException {
-        Instance = new ComputationServer("7.81.11.123", 8080);
+
+        Configure configure = Configure.getConfigureInstance();
+        configure.loadProperties();
+        int computation_port = configure.getIntProperties("computation_port");
+        Instance = new ComputationServer("7.81.11.123", computation_port);
         Instance.bind();
 
         String filePath = "d:/data/tb_call_201202_random.txt";

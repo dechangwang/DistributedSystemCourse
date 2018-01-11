@@ -4,6 +4,7 @@ import cn.edu.wang.DataAnalysis.Network.FileDispatch.FileDispatchClient;
 import cn.edu.wang.DataAnalysis.Network.FileDispatch.FileDispatchServer;
 import cn.edu.wang.DataAnalysis.Network.Message.AskComputationMsg;
 import cn.edu.wang.DataAnalysis.Network.Message.LoginMsg;
+import cn.edu.wang.config.Configure;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -66,14 +67,19 @@ public class ComputationClient {
 
     }
     public static void main(String[]args) throws InterruptedException {
+
+        Configure configure = Configure.getConfigureInstance();
+        configure.loadProperties();
+        int computation_port = configure.getIntProperties("computation_port");
+        int file_port = configure.getIntProperties("file_dispatch_port");
         try{Constants.setClientId(InetAddress.getLocalHost().toString());}catch(Exception e){}
-        ComputationClient bootstrap=new ComputationClient(8080,"7.81.11.123");
+        ComputationClient bootstrap=new ComputationClient(computation_port,"7.81.11.123");
         bootstrap.start();
 
         try
         {
             FileDispatchServer.Instance = new FileDispatchServer();
-            FileDispatchServer.Instance.bind(8081);
+            FileDispatchServer.Instance.bind(file_port);
         }
         catch (Exception e)
         {
