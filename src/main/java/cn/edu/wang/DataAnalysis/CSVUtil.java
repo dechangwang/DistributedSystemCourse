@@ -1,5 +1,6 @@
 package cn.edu.wang.DataAnalysis;
 
+import cn.edu.wang.config.Configure;
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
 
@@ -97,15 +98,18 @@ public class CSVUtil {
         System.out.println("Start Split");
         try {
            // FileReader read = new FileReader(path + fileName + "." + extension);
-            InputStreamReader isr = new InputStreamReader(new FileInputStream(path + fileName + "." + extension), "UTF-8");
+            InputStreamReader isr = new InputStreamReader(new FileInputStream(path +File.separator+ fileName + "." + extension), "UTF-8");
             BufferedReader read = new BufferedReader(isr);
             BufferedReader br = new BufferedReader(read);
             String row;
             List<FileWriter> flist = new ArrayList<FileWriter>();
             LinkedList<String> fPath = new LinkedList<>();
+            Configure configure = Configure.getConfigureInstance();
+            configure.loadProperties();
+            String split_file_path = configure.getProperties("split_file_path");
             for (int i = 0; i < count; i++) {
-                flist.add(new FileWriter(path + fileName + "_" + i + "." + extension));
-                fPath.add(path + fileName + "_" + i + "." + extension);
+                flist.add(new FileWriter(split_file_path + File.separator + fileName + "_" + i + "." + extension));
+                fPath.add(split_file_path  + File.separator+ fileName + "_" + i + "." + extension);
             }
            // Stream<String> lines = br.lines();
            // long totalLines = lines.count();

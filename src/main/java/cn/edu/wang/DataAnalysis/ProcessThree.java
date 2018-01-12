@@ -1,5 +1,6 @@
 package cn.edu.wang.DataAnalysis;
 
+import cn.edu.wang.config.Configure;
 import com.csvreader.CsvWriter;
 
 import java.io.IOException;
@@ -12,7 +13,10 @@ public class ProcessThree extends DataAnalysis<HashMap<String, Map<String, Doubl
     public ProcessThree() {
         super(3);
         CollectedResult = new HashMap<>();
-        OutputFilePath = "d:/data/tb_call_201202_random_output_3.csv";
+        //OutputFilePath = "d:/data/tb_call_201202_random_output_3.csv";
+        Configure configure = Configure.getConfigureInstance();
+        configure.loadProperties();
+        OutputFilePath = configure.getProperties("calc_output_path_3");//"d:/data/tb_call_201202_random_output_2.xlsx";
 
     }
 

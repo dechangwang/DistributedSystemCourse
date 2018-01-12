@@ -4,8 +4,12 @@ import cn.edu.wang.DataAnalysis.*;
 import cn.edu.wang.DataAnalysis.Network.FileDispatch.FileDispatchClient;
 import cn.edu.wang.DataAnalysis.Network.FileDispatch.FileDispatchServer;
 import cn.edu.wang.DataAnalysis.Network.Message.NodeStartJobMsg;
+import cn.edu.wang.Global;
+import cn.edu.wang.bean.Message;
+import cn.edu.wang.communication.CommunicateClient;
 import cn.edu.wang.config.Configure;
 import cn.edu.wang.uploadFile.FileUploadFile;
+import com.google.gson.Gson;
 import io.netty.channel.socket.SocketChannel;
 
 
@@ -42,11 +46,14 @@ public class ComputationServer {
     //  public ConcurrentLinkedQueue<String> AnalysisJobQueue = new ConcurrentLinkedQueue<>();
     public static int JobFinished = 0;
 
-    public void StartComputation(DataAnalysis process, int processID, String filePath) {
+    public void StartComputation(DataAnalysis process, String path, String name, String ext) {
         JobFinished = 0;
         ComputationServerHandler.AnalysisJob = process;
         //大文件分割后每一个子计算块放入队列，等待空闲client分发
-        LinkedList<String> filePaths = CSVUtil.Split("d:/data/", "tb_call_201202_random", "txt", 10);
+        Configure configure = Configure.getConfigureInstance();
+        configure.loadProperties();
+
+        LinkedList<String> filePaths = CSVUtil.Split(path, name, ext, 10);
         //分发
         while (filePaths.size() > 0) {
             if (NettyChannelMap.IdleClient.size() > 0) {
@@ -66,15 +73,19 @@ public class ComputationServer {
         uploadFile.setFile(file);
         uploadFile.setFile_md5(fileMd5);
         uploadFile.setStarPos(0);// 文件开始位置
-        try {
-            Configure configure = Configure.getConfigureInstance();
-            int file_port = configure.getIntProperties("file_port");
-            new FileDispatchClient().connect(file_port, client.remoteAddress().getHostString(), uploadFile);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Configure configure = Configure.getConfigureInstance();
+                    int file_port = configure.getIntProperties("file_dispatch_port");
+                    new FileDispatchClient().connect(file_port, client.remoteAddress().getHostString(), uploadFile);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+
 
     }
 
@@ -112,8 +123,10 @@ public class ComputationServer {
             ChannelFuture f = bootstrap.bind(ip, port).sync();
             if (f.isSuccess()) {
                 System.out.println("computation server start---------------");
+                System.out.println("Computation Server Active!");
+
             }
-           // f.channel().closeFuture().sync();
+            f.channel().closeFuture().sync();
 
         } finally {
             // 优雅停机
@@ -123,31 +136,46 @@ public class ComputationServer {
     }
 
     public static ComputationServer Instance;
+public  void StartComputation(String number) {
+    Configure configure = Configure.getConfigureInstance();
+    configure.loadProperties();
 
-    public static void main(String[] args) throws InterruptedException {
-
+    String path = configure.getProperties("calc_file_path");
+    String name = configure.getProperties("calc_file_name");
+    String ext = configure.getProperties("calc_file_ext");
+    if (number.equals("1")) {
+        Instance.StartComputation(new ProcessOne(), path, name, ext);
+    } else if (number.equals("2")) {
+        Instance.StartComputation(new ProcessTwo(), path, name, ext);
+    } else if (number.equals("3")) {
+        Instance.StartComputation(new ProcessThree(), path, name, ext);
+    }
+}
+    public static void start() throws InterruptedException {
         Configure configure = Configure.getConfigureInstance();
         configure.loadProperties();
         int computation_port = configure.getIntProperties("computation_port");
-        Instance = new ComputationServer("7.81.11.123", computation_port);
-        Instance.bind();
 
-        String filePath = "d:/data/tb_call_201202_random.txt";
-        while (true) {
-            try {
-                BufferedReader in = new BufferedReader(new InputStreamReader(
-                        System.in));
-                String line = in.readLine();
-                if (line.equals("start 1")) {
-                    Instance.StartComputation(new ProcessOne(), 1, filePath);
-                } else if (line.equals("start 2")) {
-                    Instance.StartComputation(new ProcessTwo(), 2, filePath);
-                } else if (line.equals("start 3")) {
-                    Instance.StartComputation(new ProcessThree(), 3, filePath);
+        String currentIp = configure.getProperties("current_ip");
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Instance = new ComputationServer(currentIp, computation_port);
+                    Instance.bind();
+
+                } catch (Exception e) {
+
                 }
-            } catch (Exception e) {
             }
-        }
+        }).start();
+
+
+
+    }
+    public static void main(String[] args) throws InterruptedException {
+
+
 /*
         while (true){
             SocketChannel channel=(SocketChannel)NettyChannelMap.get("001");

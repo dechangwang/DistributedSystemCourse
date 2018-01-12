@@ -38,7 +38,7 @@ public class FileDispatchServer {
             if (f.isSuccess()) {
                 System.out.println("file dispatch server start---------------");
             }
-           // f.channel().closeFuture().sync();
+            f.channel().closeFuture().sync();
 
         }
         catch(Exception e)

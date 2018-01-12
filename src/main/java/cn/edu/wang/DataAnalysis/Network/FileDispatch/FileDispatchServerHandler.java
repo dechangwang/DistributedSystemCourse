@@ -4,6 +4,7 @@ import cn.edu.wang.DataAnalysis.Network.ComputationServer;
 import cn.edu.wang.DataAnalysis.Network.Message.LoginMsg;
 import cn.edu.wang.DataAnalysis.Network.Message.NodeFileReceivedMsg;
 import cn.edu.wang.DataAnalysis.Network.NettyChannelMap;
+import cn.edu.wang.config.Configure;
 import cn.edu.wang.uploadFile.FileUploadFile;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -17,8 +18,14 @@ import java.io.*;
 public class FileDispatchServerHandler extends ChannelInboundHandlerAdapter {
     private int byteRead;
     private volatile int start = 0;
-    private String file_dir = "D:\\data\\output";
+    private String file_dir;// = "D:\\data\\output";
 
+    public FileDispatchServerHandler()
+    {
+        Configure configure = Configure.getConfigureInstance();
+        configure.loadProperties();
+        file_dir = configure.getProperties("save_file_path");//"d:/data/tb_call_201202_random_output_2.xlsx";
+    }
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof FileUploadFile) {

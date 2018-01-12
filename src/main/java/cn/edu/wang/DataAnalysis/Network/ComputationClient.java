@@ -58,36 +58,54 @@ public class ComputationClient {
                 socketChannel = (SocketChannel) future.channel();
                 System.out.println("connect  computation server  成功---------");
             }
-          //  future.channel().closeFuture().sync();
+            //future.channel().closeFuture().sync();
 
         }finally {
             //eventLoopGroup.shutdownGracefully().sync();
         }
-
-
     }
-    public static void main(String[]args) throws InterruptedException {
 
+    public static void start(String severIp) throws InterruptedException {
         Configure configure = Configure.getConfigureInstance();
         configure.loadProperties();
         int computation_port = configure.getIntProperties("computation_port");
         int file_port = configure.getIntProperties("file_dispatch_port");
         try{Constants.setClientId(InetAddress.getLocalHost().toString());}catch(Exception e){}
-        ComputationClient bootstrap=new ComputationClient(computation_port,"7.81.11.123");
-        bootstrap.start();
 
-        try
-        {
-            FileDispatchServer.Instance = new FileDispatchServer();
-            FileDispatchServer.Instance.bind(file_port);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-        LoginMsg loginMsg=new LoginMsg();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    ComputationClient bootstrap = new ComputationClient(computation_port, severIp);
+                    bootstrap.start();
 
-        bootstrap.socketChannel.writeAndFlush(loginMsg);
+                    LoginMsg loginMsg=new LoginMsg();
+
+                    bootstrap.socketChannel.writeAndFlush(loginMsg);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try
+                {
+                    FileDispatchServer.Instance = new FileDispatchServer();
+                    FileDispatchServer.Instance.bind(file_port);
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+
+    }
+    public static void main(String[]args) throws InterruptedException {
+
+
        // FileDispatchClient.Instance.SocketChannel.writeAndFlush(loginMsg);
     }
 }

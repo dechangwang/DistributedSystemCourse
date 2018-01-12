@@ -1,21 +1,21 @@
 package cn.edu.wang.DataAnalysis;
 
+import cn.edu.wang.config.Configure;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ProcessTwo extends DataAnalysis<EnumMap<CallType, EnumMap<MobileOperator, Long>>> {
     public ProcessTwo() {
         super(2);
         CollectedResult = new EnumMap<>(CallType.class);
-        OutputFilePath = "d:/data/tb_call_201202_random_output_2.xlsx";
+        Configure configure = Configure.getConfigureInstance();
+        configure.loadProperties();
+        OutputFilePath = configure.getProperties("calc_output_path_2");//"d:/data/tb_call_201202_random_output_2.xlsx";
 
     }
 

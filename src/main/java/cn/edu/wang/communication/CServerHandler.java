@@ -1,5 +1,6 @@
 package cn.edu.wang.communication;
 
+import cn.edu.wang.DataAnalysis.Network.ComputationClient;
 import cn.edu.wang.Global;
 import cn.edu.wang.bean.Message;
 import cn.edu.wang.config.Configure;
@@ -93,6 +94,9 @@ public class CServerHandler extends ChannelInboundHandlerAdapter{
                 response = searchFile(message.getFileName());
             }else if (message.getStatus().equals("delete")){
                 response = searchAndDeleteFile(message.getFileName());
+            }else if (message.getStatus().equals("calc"))
+            {
+                ComputationClient.start(message.getIp());
             }
         }catch (Exception e){
             e.printStackTrace();
